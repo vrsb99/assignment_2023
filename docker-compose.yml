@@ -9,6 +9,7 @@ services:
       - SERVICE_TAGS=rpc
     depends_on:
       - etcd
+      - mysql
   http-server:
     build: http-server
     ports:
@@ -24,3 +25,19 @@ services:
     command: ["etcd", "--advertise-client-urls", "http://etcd:2379", "--listen-client-urls", "http://0.0.0.0:2379"]
     ports:
       - "2379:2379"
+  mysql:
+    image: mysql:8.0
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=TikTok
+    volumes:
+      - ./mysql:/var/lib/mysql
+  redis:
+    image: redis:7.0
+    ports:
+      - "6379:6379"
+    environment:
+      - REDIS_PASSWORD=TikTok
+    volumes:
+      - ./redis:/data
