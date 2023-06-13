@@ -2,8 +2,6 @@ package main
 
 import (
 	"context"
-	"math/rand"
-
 	"github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server/kitex_gen/rpc"
 )
 
@@ -11,21 +9,58 @@ import (
 type IMServiceImpl struct{}
 
 func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
-	resp := rpc.NewSendResponse()
-	resp.Code, resp.Msg = areYouLucky()
-	return resp, nil
+
+	id := GetUniqueID(req.Message.GetChat())
+
+	message := &Input{
+		Message:   req.Message.GetText(),
+		Sender:    req.Message.GetSender(),
+		Timestamp: req.Message.GetSendTime(),
+	}
+
+	if err := database.WriteToDatabase(ctx, id, message); err != nil {
+		return nil, err
+	}
+
+	response := rpc.NewSendResponse()
+	response.Code, response.Msg = 0, "success"
+	return response, nil
 }
 
 func (s *IMServiceImpl) Pull(ctx context.Context, req *rpc.PullRequest) (*rpc.PullResponse, error) {
-	resp := rpc.NewPullResponse()
-	resp.Code, resp.Msg = areYouLucky()
-	return resp, nil
-}
+	
+	chatID := GetUniqueID(req.GetChat())
+	start := req.GetCursor()
+	limit := req.GetLimit()
+	end := start + int64(limit)
 
-func areYouLucky() (int32, string) {
-	if rand.Int31n(2) == 1 {
-		return 0, "success"
-	} else {
-		return 500, "oops"
+
+	messages, err := database.ReadFromDatabase(ctx, chatID, start, end, req.GetReverse())
+	if err != nil {
+		return nil, err
 	}
+
+	returnedMessages := make([]*rpc.Message, 0)
+	var count int32 = 0
+	var nextCursor int64 = 0
+	hasMore := false
+	for _, message := range messages {
+		if count+1 > limit {
+			hasMore = true
+			nextCursor = end
+			break
+		}
+		returnedMessages = append(returnedMessages, &rpc.Message{
+			Chat:     req.GetChat(),
+			Text:     message.Message,
+			Sender:   message.Sender,
+			SendTime: message.Timestamp,
+		})
+		count++
+	}
+
+	response := rpc.NewPullResponse()
+	response.Messages, response.HasMore, response.NextCursor = returnedMessages, &hasMore, &nextCursor
+	response.Code, response.Msg = 0, "success"
+	return response, nil
 }
