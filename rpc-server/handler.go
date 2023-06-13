@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+
 	"github.com/TikTokTechImmersion/assignment_demo_2023/rpc-server/kitex_gen/rpc"
 )
 
@@ -10,6 +12,10 @@ type IMServiceImpl struct{}
 
 func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
 
+	if req.Message == nil {
+		return nil, fmt.Errorf("Message should not be nil")
+	}
+	
 	id := GetUniqueID(req.Message.GetChat())
 
 	message := &Input{
