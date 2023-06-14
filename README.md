@@ -20,7 +20,7 @@ curl -X POST -H "Content-Type: application/json" -d '
     }' 
     http://localhost:8080/api/send
 ```
-3. To receive a POST request message
+3. To receive a GET request message
 ```
 curl -X GET -H "Content-Type: application/json" -d '
     {
@@ -50,7 +50,7 @@ The following is an example:
 ## Pulling Requests with `api/pull`
 The following is an example:
 
-1. Specify the senderName and Receivername with a ':'
+1. Chat specifies the senderName and Receivername with a ':'
 2. Cursor specifies the starting point of the messages
 3. Limit specifies the number of messages to be pulled
 4. Reverse specifies the order of the messages
