@@ -11,11 +11,14 @@ import (
 type IMServiceImpl struct{}
 
 func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.SendResponse, error) {
+	response := rpc.NewSendResponse()
 
 	if req.Message == nil {
-		return nil, fmt.Errorf("Message should not be nil")
+		response.Code, response.Msg = 1, "Message should not be nil"
+		return response, fmt.Errorf("Message should not be nil")
 	}
-	
+
+	fmt.Printf("req: %v\n", req)
 	id := GetUniqueID(req.Message.GetChat())
 
 	message := &Input{
@@ -25,10 +28,11 @@ func (s *IMServiceImpl) Send(ctx context.Context, req *rpc.SendRequest) (*rpc.Se
 	}
 
 	if err := database.WriteToDatabase(ctx, id, message); err != nil {
-		return nil, err
+		response.Code, response.Msg = 1, "Failed to write to database"
+		return response, err
 	}
 
-	response := rpc.NewSendResponse()
+	
 	response.Code, response.Msg = 0, "success"
 	return response, nil
 }
